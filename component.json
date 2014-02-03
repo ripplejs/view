@@ -1,0 +1,14 @@
+{
+  "name": "view",
+  "repo": "ripplejs/view",
+  "description": "A compiled template",
+  "version": "0.0.1",
+  "keywords": [],
+  "dependencies": {},
+  "development": {},
+  "license": "MIT",
+  "main": "index.js",
+  "scripts": [
+    "index.js"
+  ]
+}
