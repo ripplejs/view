@@ -1,11 +1,18 @@
 {
   "name": "view",
   "repo": "ripplejs/view",
-  "description": "A compiled template",
+  "description": "A simple view wrapper",
   "version": "0.0.1",
   "keywords": [],
-  "dependencies": {},
-  "development": {},
+  "dependencies": {
+    "component/domify": "*",
+    "component/emitter": "*",
+    "ripplejs/model": "*",
+    "ripplejs/interpolate": "*"
+  },
+  "development": {
+    "component/assert": "*"
+  },
   "license": "MIT",
   "main": "index.js",
   "scripts": [
