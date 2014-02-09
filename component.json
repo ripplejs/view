@@ -8,7 +8,7 @@
     "component/domify": "*",
     "component/emitter": "*",
     "ripplejs/model": "0.3.0",
-    "ripplejs/interpolate": "*"
+    "ripplejs/interpolate": "0.0.5"
   },
   "development": {
     "component/assert": "*"

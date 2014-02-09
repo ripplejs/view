@@ -139,6 +139,16 @@ module.exports = function(template, process) {
   };
 
   /**
+   * Watch for a state change
+   * @param  {String|Array} key
+   * @param  {Function} fn
+   * @return {Function} unbinder
+   */
+  View.prototype.change = function(key, fn) {
+    return this.state.change(key, fn);
+  };
+
+  /**
    * Run an interpolation on the string using the state. Whenever
    * the model changes it will render the string again
    *
@@ -148,15 +158,15 @@ module.exports = function(template, process) {
    * @return {Function} a function to unbind the interpolation
    */
   View.prototype.interpolate = function(str, callback) {
-    var state = this.state;
+    var self = this;
     var filters = this.filters;
     var attrs = interpolate.props(str);
     if(attrs.length === 0) return;
     function render() {
-      return interpolate(str, state.get(attrs), filters);
+      return interpolate(str, self.get(attrs), filters);
     }
     callback(render());
-    return this.state.change(attrs, function(){
+    return this.change(attrs, function(){
       callback(render());
     });
   };

@@ -164,4 +164,12 @@ describe('View', function(){
     view.emit('foo');
   })
 
+  it('should watch for changes', function(done){
+    var view = new View();
+    view.change('foo', function(){
+      done();
+    })
+    view.set('foo', 'bar');
+  })
+
 })
