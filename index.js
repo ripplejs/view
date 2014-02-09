@@ -70,6 +70,22 @@ module.exports = function(template, process) {
   };
 
   /**
+   * Add an event listener on the view when
+   * it is created
+   *
+   * @param {String} name
+   * @param {Function} fn
+   *
+   * @return {View}
+   */
+  View.event = function(name, fn) {
+    View.on('construct', function(view){
+      view.on(name, fn.bind(view, view));
+    });
+    return this;
+  };
+
+  /**
    * Stores a reference to all of the properties
    * this view can have
    *
