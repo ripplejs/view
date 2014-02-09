@@ -27,7 +27,7 @@ module.exports = function(template, process) {
   function View(state) {
     this.el = domify(template);
     this.state = new State(state);
-    this.props = new Properties();
+    this.props = new Properties(state);
     this.filters = {};
     this.View = View;
     View.emit('construct', this);
