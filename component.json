@@ -7,7 +7,7 @@
   "dependencies": {
     "component/domify": "*",
     "component/emitter": "*",
-    "ripplejs/model": "*",
+    "ripplejs/model": "0.3.0",
     "ripplejs/interpolate": "*"
   },
   "development": {
