@@ -73,6 +73,18 @@ describe('View', function(){
     view.set('foo', 'baz');
   })
 
+  it('should unwatch a strings changes', function(){
+    var count = 0;
+    var view = new View();
+    view.set('foo', 'bar');
+    var unbind = view.interpolate('{{foo}}', function(val){
+      count++;
+    });
+    unbind();
+    view.set('foo', 'baz');
+    assert(count === 1, count);
+  })
+
   it('should mount to an element and fire an event', function(done){
     var view = new View();
     view.on('mount', function(){
