@@ -6,6 +6,14 @@ var interpolate = require('interpolate');
 module.exports = function(template, process) {
 
   /**
+   * A function that renders the view.
+   * This is set with View.render
+   *
+   * @type {Function}
+   */
+  var render;
+
+  /**
    * Stores the state of the view.
    *
    * @type {Function}
@@ -13,25 +21,18 @@ module.exports = function(template, process) {
   var State = model();
 
   /**
-   * Stores the properties of the view.
-   *
-   * @type {Function}
-   */
-  var Properties = model();
-
-  /**
    * The view controller
    *
    * @param {Object} state
    */
-  function View(state) {
+  function View(data) {
     this.el = domify(template);
-    this.state = new State(state);
-    this.props = new Properties(state);
+    this.state = new State(data);
     this.filters = {};
     this.View = View;
+    if(render) render.call(this, this);
+    if(process) process.call(this);
     View.emit('construct', this);
-    if(process) process(this);
   }
 
   /**
@@ -41,6 +42,18 @@ module.exports = function(template, process) {
    */
   View.use = function(fn){
     fn(this);
+    return this;
+  };
+
+  /**
+   * Add a function that tell us how
+   * to render this view. Only one function
+   * can be set as the render function
+   *
+   * @return {View}
+   */
+  View.render = function(fn){
+    render = fn;
     return this;
   };
 
@@ -82,34 +95,6 @@ module.exports = function(template, process) {
     View.on('construct', function(view){
       view.on(name, fn.bind(view, view));
     });
-    return this;
-  };
-
-  /**
-   * Stores a reference to all of the properties
-   * this view can have
-   *
-   * @type {Array}
-   */
-  View.props = [];
-
-  /**
-   * Create a new property on the view
-   *
-   * @return {void}
-   */
-  View.prop = function(name){
-    View.on('construct', function(view){
-      Object.defineProperty(view, name, {
-        get: function(){
-          return view.props.get(name);
-        },
-        set: function(val){
-          view.props.set(name, val);
-        }
-      });
-    });
-    View.props.push(name);
     return this;
   };
 

@@ -49,10 +49,7 @@ describe('View', function(){
   it('should have chainable static methods', function(){
     View
       .use(function(){})
-      .filter('noobify', function(){
-        return 'noob';
-      })
-      .prop('foo')
+      .filter('noobify', function(){ return 'noob'; })
       .computed('bar', ['baz'], function(){});
 
     var view = new View();
@@ -117,20 +114,6 @@ describe('View', function(){
       done();
     })
     view.unbind();
-  })
-
-  it('should get properies', function(){
-    View.prop('foo');
-    var view = new View();
-    view.props.set('foo', 'bar');
-    assert(view.foo === 'bar');
-  })
-
-  it('should set properties', function(){
-    View.prop('foo');
-    var view = new View();
-    view.foo = 'bar';
-    assert(view.props.get('foo') === 'bar');
   })
 
   it('should have computed properties', function(){
