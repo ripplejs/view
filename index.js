@@ -14,6 +14,13 @@ module.exports = function(template, process) {
   var render;
 
   /**
+   * Stores the interpolation filters
+   *
+   * @type {Object}
+   */
+  var filters = {};
+
+  /**
    * Stores the state of the view.
    *
    * @type {Function}
@@ -66,9 +73,7 @@ module.exports = function(template, process) {
    * @return {View}
    */
   View.filter = function(name, fn) {
-    View.on('construct', function(view){
-      view.filters[name] = fn;
-    });
+    filters[name] = fn;
     return this;
   };
 
@@ -144,7 +149,6 @@ module.exports = function(template, process) {
    */
   View.prototype.interpolate = function(str, callback) {
     var self = this;
-    var filters = this.filters;
     var attrs = interpolate.props(str);
     if(attrs.length === 0) return;
     function render() {
@@ -166,6 +170,7 @@ module.exports = function(template, process) {
   View.prototype.mount = function(el) {
     el.appendChild(this.el);
     this.emit('mount', el);
+    View.emit('mount', this, el);
     return this;
   };
 
@@ -178,6 +183,7 @@ module.exports = function(template, process) {
     if(!this.el.parentNode) return;
     this.el.parentNode.removeChild(this.el);
     this.emit('unmount');
+    View.emit('unmount', this);
     return this;
   };
 
