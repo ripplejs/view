@@ -149,16 +149,6 @@ describe('View', function(){
     assert(view.get('fullname') === 'Jet Li');
   })
 
-  it('should add events to the view', function(done){
-    View.event('foo', function(view){
-      assert(this instanceof View);
-      assert(view instanceof View);
-      done();
-    });
-    var view = new View();
-    view.emit('foo');
-  })
-
   it('should watch for changes', function(done){
     var view = new View();
     view.change('foo', function(){
