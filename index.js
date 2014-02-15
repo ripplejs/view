@@ -3,7 +3,7 @@ var emitter = require('emitter');
 var model = require('model');
 var interpolate = require('interpolate');
 
-module.exports = function(template, process) {
+module.exports = function(template) {
 
   /**
    * A function that renders the view.
@@ -12,6 +12,14 @@ module.exports = function(template, process) {
    * @type {Function}
    */
   var render;
+
+  /**
+   * A function that works as a constructor
+   * for the view. Set it with View.init
+   *
+   * @type {Function}
+   */
+  var init;
 
   /**
    * Stores the interpolation filters
@@ -35,10 +43,8 @@ module.exports = function(template, process) {
   function View(data) {
     this.el = domify(template);
     this.state = new State(data);
-    this.filters = {};
-    this.View = View;
+    if(init) init.call(this);
     if(render) render.call(this, this);
-    if(process) process.call(this);
     View.emit('construct', this);
   }
 
@@ -48,7 +54,7 @@ module.exports = function(template, process) {
    * @return {View}
    */
   View.use = function(fn){
-    fn(this);
+    fn.call(this, this);
     return this;
   };
 
@@ -61,6 +67,16 @@ module.exports = function(template, process) {
    */
   View.render = function(fn){
     render = fn;
+    return this;
+  };
+
+  /**
+   * Add an initialize method. This is another
+   *
+   * @return {View}
+   */
+  View.init = function(fn){
+    init = fn;
     return this;
   };
 
@@ -84,22 +100,6 @@ module.exports = function(template, process) {
    */
   View.computed = function(key, deps, fn) {
     State.computed(key, deps, fn);
-    return this;
-  };
-
-  /**
-   * Add an event listener on the view when
-   * it is created
-   *
-   * @param {String} name
-   * @param {Function} fn
-   *
-   * @return {View}
-   */
-  View.event = function(name, fn) {
-    View.on('construct', function(view){
-      view.on(name, fn.bind(view, view));
-    });
     return this;
   };
 
@@ -154,6 +154,7 @@ module.exports = function(template, process) {
     function render() {
       return interpolate(str, self.get(attrs), filters);
     }
+    if(!callback) return render();
     callback(render());
     return this.change(attrs, function(){
       callback(render());
@@ -167,10 +168,16 @@ module.exports = function(template, process) {
    *
    * @return {View}
    */
-  View.prototype.mount = function(el) {
-    el.appendChild(this.el);
+  View.prototype.mount = function(el, replace) {
+    if(replace) {
+      el.parentNode.replaceChild(this.el, el);
+    }
+    else {
+      el.appendChild(this.el);
+    }
     this.emit('mount', el);
     View.emit('mount', this, el);
+    this.bind();
     return this;
   };
 
@@ -180,10 +187,11 @@ module.exports = function(template, process) {
    * @return {View}
    */
   View.prototype.unmount = function() {
-    if(!this.el.parentNode) return;
+    if(!this.el.parentNode) return this;
     this.el.parentNode.removeChild(this.el);
     this.emit('unmount');
     View.emit('unmount', this);
+    this.unbind();
     return this;
   };
 

@@ -2,12 +2,12 @@
   "name": "view",
   "repo": "ripplejs/view",
   "description": "A simple view wrapper",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "keywords": [],
   "dependencies": {
     "component/domify": "*",
     "component/emitter": "*",
-    "ripplejs/model": "0.3.0",
+    "ripplejs/model": "0.3.1",
     "ripplejs/interpolate": "0.0.5"
   },
   "development": {
