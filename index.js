@@ -1,8 +1,11 @@
 var domify = require('domify');
 var emitter = require('emitter');
 var model = require('model');
+var toArray = require('to-array');
+
 
 module.exports = function(template) {
+
 
   /**
    * Stores the state of the view.
@@ -11,20 +14,51 @@ module.exports = function(template) {
    */
   var State = model();
 
+
   /**
-   * The view controller
+   * The view controls the lifecycle of the
+   * element that it creates from a template.
+   * Each element can only have one view and
+   * each view can only have one element.
    *
-   * @param {Object} state
+   * @param {Object} data
+   * @param {Object} options
    */
-  function View(data, owner) {
-    this.el = domify(template);
-    this.state = new State(data);
-    this.owner = owner;
-    this.root = (owner) ? owner.root : this;
-    if(this.init) this.init();
-    if(this.render) this.render();
-    View.emit('construct', this);
+  function View(data, options) {
+    options = options || {};
+    this.state = new State();
+    this.owner = options.owner;
+    this.root = this.owner ? this.owner.root : this;
+    this.template = options.template || template;
+    View.emit('created', this, data, options);
+    this.set(data);
+    this.el = this.render();
+    View.emit('ready', this);
   }
+
+
+  /**
+   * Mixins
+   */
+  emitter(View);
+  emitter(View.prototype);
+
+
+  /**
+   * Alternate create method so that we can
+   * keep the API for normal views nice
+   *
+   * @param {Object} options
+   *
+   * @return {View}
+   */
+  View.create = function(options) {
+    return new View(options.data, {
+      template: options.template,
+      owner: options.owner
+    });
+  };
+
 
   /**
    * Use a plugin
@@ -32,72 +66,117 @@ module.exports = function(template) {
    * @return {View}
    */
   View.use = function(fn){
-    fn.call(this, this);
+    fn(this);
     return this;
   };
+
 
   /**
    * Add a computed state property
    *
-   * @return {void}
+   * @return {View}
    */
   View.computed = function(key, deps, fn) {
     State.computed(key, deps, fn);
     return this;
   };
 
-  /**
-   * Mixin emitter
-   */
-  emitter(View);
-  emitter(View.prototype);
 
   /**
-   * Get the value of a property on the view
+   * When calling View.on the function will
+   * always be called in the context of the view instance
+   *
+   * @return {View}
+   */
+  View.on = function(event, fn) {
+    if(typeof event !== 'string') {
+      for(var key in event) {
+        View.on(key, event[key]);
+      }
+      return this;
+    }
+    emitter.prototype.on.call(this, event, function(){
+      var args = toArray(arguments);
+      var view = args.shift();
+      fn.apply(view, args);
+    });
+    return this;
+  };
+
+
+  /**
+   * Get the value of a property on the view. If the
+   * value is undefined it checks the owner view recursively
+   * up to the root.
+   *
    * @param  {String} key
+   *
    * @return {Mixed}
    */
   View.prototype.get = function(key) {
-    return this.state.get(key);
+    var val = this.state.get(key);
+    if(val === undefined && this.owner) return this.owner.get(key);
+    return val;
   };
+
 
   /**
    * Set the value of a property on the view
+   *
    * @param  {String} key
    * @param  {Mixed}  value
+   *
    * @return {void}
    */
   View.prototype.set = function(key, value) {
     this.state.set(key, value);
   };
 
+
   /**
    * Watch for a state change
+   *
    * @param  {String|Array} key
    * @param  {Function} fn
+   *
    * @return {Function} unbinder
    */
   View.prototype.change = function(key, fn) {
-    return this.state.change(key, fn);
+    var binding = this.state.change(key, fn);
+    this.once('destroy', binding);
+    return binding;
   };
+
+
+  /**
+   * Compile this view's template into an element.
+   *
+   * @return {Element}
+   */
+  View.prototype.render = function(){
+    return domify(this.template);
+  };
+
 
   /**
    * Append this view to an element
    *
-   * @param {Element} el
+   * @param {Element} node
    *
    * @return {View}
    */
-  View.prototype.mount = function(el, replace) {
+  View.prototype.mount = function(node, replace) {
     if(replace) {
-      el.parentNode.replaceChild(this.el, el);
+      node.parentNode.replaceChild(this.el, node);
     }
     else {
-      el.appendChild(this.el);
+      node.appendChild(this.el);
     }
-    this.emit('mount', el);
+    View.emit('mount', this, node, replace);
+    this.emit('mount', node, replace);
     return this;
   };
+
 
   /**
    * Remove the element from the DOM
@@ -107,9 +186,24 @@ module.exports = function(template) {
   View.prototype.unmount = function() {
     if(!this.el.parentNode) return this;
     this.el.parentNode.removeChild(this.el);
+    View.emit('unmount', this);
     this.emit('unmount');
     return this;
   };
+
+
+  /**
+   * Remove the element from the DOM
+   *
+   * @return {View}
+   */
+  View.prototype.destroy = function() {
+    View.emit('destroy', this);
+    this.emit('destroy');
+    this.unmount();
+    this.off();
+  };
+
 
   return View;
 };

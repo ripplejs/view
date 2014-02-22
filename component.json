@@ -7,7 +7,8 @@
   "dependencies": {
     "component/domify": "*",
     "component/emitter": "*",
-    "ripplejs/model": "0.3.1"
+    "ripplejs/model": "0.3.1",
+    "timoxley/to-array": "0.2.1"
   },
   "development": {
     "component/assert": "*"
