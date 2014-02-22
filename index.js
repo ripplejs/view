@@ -114,6 +114,14 @@ module.exports = function(template) {
    * @return {Mixed}
    */
   View.prototype.get = function(key) {
+    if(Array.isArray(key)) {
+      var data = {};
+      var self = this;
+      key.forEach(function(attr){
+        data[attr] = self.get(attr);
+      });
+      return data;
+    }
     var val = this.state.get(key);
     if(val === undefined && this.owner) return this.owner.get(key);
     return val;

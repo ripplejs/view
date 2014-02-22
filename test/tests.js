@@ -123,6 +123,31 @@ describe('View', function(){
       assert(grandchild.get('foo') === 'bar');
     });
 
+    it('should get multiple values from the owner', function () {
+      var items = [];
+
+      var parent = new View({
+        foo: 'bar',
+        items: items
+      });
+
+      var child = View.create({
+        data: {
+          color: 'red'
+        },
+        owner: parent
+      });
+
+      assert( child.get('color') === 'red' );
+      assert( child.get('foo') === 'bar' );
+      assert( child.get('items') === items );
+
+      var all = child.get(['color', 'foo', 'items']);
+      assert( all.color === 'red' );
+      assert( all.foo === 'bar' );
+      assert( all.items === items );
+    });
+
   });
 
   describe('lifecycle events', function () {
