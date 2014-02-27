@@ -65,8 +65,8 @@ module.exports = function(template) {
    *
    * @return {View}
    */
-  View.use = function(fn){
-    fn(this);
+  View.use = function(fn, options){
+    fn(this, options);
     return this;
   };
 
