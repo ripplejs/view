@@ -12,7 +12,7 @@ describe('View', function(){
     var view = new View();
   })
 
-  it('should construct with state properties', function(){
+  it('should construct with properties', function(){
     var view = new View({
       foo: 'bar'
     });
@@ -37,35 +37,90 @@ describe('View', function(){
     view.unmount();
   })
 
+  describe('getting values', function () {
+
+    it('should get values from the state first', function () {
+      var view = new View({
+        foo: 'bar'
+      });
+      view.state.set('foo', 'baz');
+      assert( view.get('foo') === 'baz' );
+    });
+
+    it('should get values from the props second', function () {
+      var view = new View({
+        one: 'prop'
+      });
+      view.state.set('one', undefined);
+      assert( view.get('one') === 'prop' );
+    });
+
+    it('should get values from the owner last', function () {
+      var parent = new View({
+        one: 'one'
+      });
+      var child = new View(null, {
+        owner: parent
+      });
+      child.set('foo', 'bar');
+      assert( child.get('foo') === 'bar' );
+      assert( child.get('one') === 'one' );
+    });
+
+  });
+
   describe('state', function () {
 
     it('should set state', function(){
       var view = new View();
-      view.set('foo', 'bar');
-      assert(view.get('foo') === 'bar');
+      view.state.set('foo', 'bar');
+      assert(view.state.get('foo') === 'bar');
     })
+
+    it('should get state with accessors', function () {
+      var view = View.create({
+        state: {
+          foo: 'bar'
+        }
+      });
+      assert(view.state.foo === 'bar');
+    });
+
+    it('should set state with accessors', function () {
+      var view = View.create({
+        state: {
+          foo: 'baz'
+        }
+      });
+      view.state.foo = 'bar';
+      assert(view.state.foo === 'bar');
+    });
 
     it('should have computed properties', function(){
       View.computed('fullname', ['firstname', 'lastname'], function(first, last){
         return [first,last].join(' ');
       });
-      var view = new View({
-        'firstname': 'Bruce',
-        'lastname': 'Willis'
+      var view = View.create({
+        state: {
+          'firstname': 'Bruce',
+          'lastname': 'Willis'
+        }
       });
-      assert(view.get('fullname') === 'Bruce Willis');
-      view.set('firstname', 'Danny');
-      assert(view.get('fullname') === 'Danny Willis');
+      assert(view.state.get('fullname') === 'Bruce Willis');
+      view.state.set('firstname', 'Danny');
+      assert(view.state.get('fullname') === 'Danny Willis');
     })
 
     it('should have computed properties with nested dependencies', function(){
       View.computed('fullname', ['names.first', 'names.last'], function(first, last){
         return [first,last].join(' ');
       });
-      var view = new View({
-        names: {
-          first: 'Bruce',
-          last: 'Willis'
+      var view = View.create({
+        state: {
+          names: {
+            first: 'Bruce',
+            last: 'Willis'
+          }
         }
       });
       assert(view.get('fullname') === 'Bruce Willis');
@@ -80,25 +135,47 @@ describe('View', function(){
 
     it('should watch for changes', function(done){
       var view = new View();
-      view.change('foo', function(){
+      view.state.change('foo', function(){
         done();
       })
-      view.set('foo', 'bar');
+      view.state.set('foo', 'bar');
     })
 
     it('should be able to set default properties', function () {
       View.on('created', function(){
-        this.set({
+        this.state.set({
           first: 'Fred',
           last: 'Flintstone'
         });
       });
-      var view = new View({
-        first: 'Wilma'
-      });
+      var view = new View();
+      view.set('first', 'Wilma');
       assert(view.get('first') === 'Wilma');
       assert(view.get('last') === 'Flintstone');
     });
+
+    it('should have accessors', function(){
+
+    })
+
+  });
+
+  describe('props', function () {
+
+    it('should set props when created', function () {
+      var view = new View({
+        foo: 'bar'
+      });
+      assert(view.props.get('foo') === 'bar');
+    });
+
+    it('should not allow setting new props', function(){
+      var view = new View({
+        foo: 'bar'
+      });
+      view.props.set('bar', 'foo');
+      assert( view.props.get('bar') === undefined )
+    })
 
   });
 
@@ -121,31 +198,6 @@ describe('View', function(){
       var child = new View(null, { owner: parent });
       var grandchild = new View(null, { owner: child });
       assert(grandchild.get('foo') === 'bar');
-    });
-
-    it('should get multiple values from the owner', function () {
-      var items = [];
-
-      var parent = new View({
-        foo: 'bar',
-        items: items
-      });
-
-      var child = View.create({
-        data: {
-          color: 'red'
-        },
-        owner: parent
-      });
-
-      assert( child.get('color') === 'red' );
-      assert( child.get('foo') === 'bar' );
-      assert( child.get('items') === items );
-
-      var all = child.get(['color', 'foo', 'items']);
-      assert( all.color === 'red' );
-      assert( all.foo === 'bar' );
-      assert( all.items === items );
     });
 
   });
@@ -186,26 +238,6 @@ describe('View', function(){
       view.mount(document.body);
       view.unmount();
       assert(view.get('foo') === 'bar');
-    });
-
-    it('should bind to multiple events at once', function(){
-      View.on({
-        ready: function(){
-          this.set('ready', true);
-        },
-        mount: function(){
-          this.set('mount', true);
-        },
-        unmount: function(){
-          this.set('unmount', true);
-        }
-      });
-      var view = new View();
-      view.mount(document.body);
-      view.unmount();
-      assert(view.get('ready'));
-      assert(view.get('mount'));
-      assert(view.get('unmount'));
     });
 
   });
@@ -273,7 +305,7 @@ describe('View', function(){
     it('should create a view with the create method', function () {
       var parent = new View();
       var view = View.create({
-        data: {
+        state: {
           foo: 'bar'
         },
         template: '<div id="created"></div>',

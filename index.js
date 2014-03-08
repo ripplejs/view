@@ -2,17 +2,35 @@ var domify = require('domify');
 var emitter = require('emitter');
 var model = require('model');
 var toArray = require('to-array');
+var computed = require('computed');
+var accessors = require('accessors');
 
+function freeze(Model) {
+  Model.on('construct', function(model){
+    Object.freeze(model.props);
+  });
+}
 
 module.exports = function(template) {
-
 
   /**
    * Stores the state of the view.
    *
    * @type {Function}
    */
-  var State = model();
+  var State = model()
+    .use(accessors)
+    .use(computed);
+
+
+  /**
+   * Stores the properties of the view
+   *
+   * @type {Function}
+   */
+  var Props = model()
+    .use(accessors)
+    .use(freeze);
 
 
   /**
@@ -24,14 +42,14 @@ module.exports = function(template) {
    * @param {Object} data
    * @param {Object} options
    */
-  function View(data, options) {
+  function View(props, options) {
     options = options || {};
-    this.state = new State();
+    this.props = new Props(props);
+    this.state = new State(options.state);
     this.owner = options.owner;
     this.root = this.owner ? this.owner.root : this;
     this.template = options.template || template;
-    View.emit('created', this, data, options);
-    this.set(data);
+    View.emit('created', this, props, options);
     this.el = this.render();
     View.emit('ready', this);
   }
@@ -53,9 +71,10 @@ module.exports = function(template) {
    * @return {View}
    */
   View.create = function(options) {
-    return new View(options.data, {
+    return new View(options.props, {
       template: options.template,
-      owner: options.owner
+      owner: options.owner,
+      state: options.state
     });
   };
 
@@ -89,18 +108,31 @@ module.exports = function(template) {
    * @return {View}
    */
   View.on = function(event, fn) {
-    if(typeof event !== 'string') {
-      for(var key in event) {
-        View.on(key, event[key]);
-      }
-      return this;
-    }
     emitter.prototype.on.call(this, event, function(){
       var args = toArray(arguments);
       var view = args.shift();
       fn.apply(view, args);
     });
     return this;
+  };
+
+
+  /**
+   * Lookup a property on this view.
+   *
+   * @param {String} prop
+   */
+  View.prototype.lookup = function(prop) {
+    if(this.state.get(prop) !== undefined) {
+      return this.state;
+    }
+    if(this.props.get(prop) !== undefined) {
+      return this.props;
+    }
+    if(this.owner) {
+      return this.owner.lookup(prop);
+    }
+    throw new Error('Cannot find property named "' + key + '"');
   };
 
 
@@ -122,9 +154,7 @@ module.exports = function(template) {
       });
       return data;
     }
-    var val = this.state.get(key);
-    if(val === undefined && this.owner) return this.owner.get(key);
-    return val;
+    return this.lookup(key).get(key);
   };
 
 
@@ -150,7 +180,7 @@ module.exports = function(template) {
    * @return {Function} unbinder
    */
   View.prototype.change = function(key, fn) {
-    var binding = this.state.change(key, fn);
+    var binding = this.lookup(key).change(key, fn);
     this.once('destroy', binding);
     return binding;
   };
