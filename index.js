@@ -126,9 +126,6 @@ module.exports = function(template) {
     if(this.state.get(prop) !== undefined) {
       return this.state;
     }
-    if(this.props.get(prop) !== undefined) {
-      return this.props;
-    }
     if(this.owner) {
       return this.owner.lookup(prop);
     }
