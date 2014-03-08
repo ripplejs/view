@@ -16,7 +16,7 @@ describe('View', function(){
     var view = new View({
       foo: 'bar'
     });
-    assert(view.get('foo') === 'bar');
+    assert(view.props.foo === 'bar');
   })
 
   it('should mount to an element and fire an event', function(done){
@@ -47,22 +47,20 @@ describe('View', function(){
       assert( view.get('foo') === 'baz' );
     });
 
-    it('should get values from the props second', function () {
+    it('should not get values from the props', function () {
       var view = new View({
         one: 'prop'
       });
-      view.state.set('one', undefined);
-      assert( view.get('one') === 'prop' );
+      assert( view.get('one') === undefined );
     });
 
-    it('should get values from the owner last', function () {
-      var parent = new View({
-        one: 'one'
-      });
+    it('should get state from the owner', function () {
+      var parent = new View();
+      parent.state.set('one', 'one');
       var child = new View(null, {
         owner: parent
       });
-      child.set('foo', 'bar');
+      child.state.set('foo', 'bar');
       assert( child.get('foo') === 'bar' );
       assert( child.get('one') === 'one' );
     });
@@ -154,10 +152,6 @@ describe('View', function(){
       assert(view.get('last') === 'Flintstone');
     });
 
-    it('should have accessors', function(){
-
-    })
-
   });
 
   describe('props', function () {
@@ -191,10 +185,9 @@ describe('View', function(){
       assert(grandchild.root == parent);
     });
 
-    it('should get properties from the owner', function () {
-      var parent = new View({
-        foo: 'bar'
-      });
+    it('should get state from the owner', function () {
+      var parent = new View();
+      parent.state.set('foo', 'bar');
       var child = new View(null, { owner: parent });
       var grandchild = new View(null, { owner: child });
       assert(grandchild.get('foo') === 'bar');

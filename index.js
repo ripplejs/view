@@ -129,7 +129,7 @@ module.exports = function(template) {
     if(this.owner) {
       return this.owner.lookup(prop);
     }
-    throw new Error('Cannot find property named "' + key + '"');
+    return this.state;
   };
 
 
@@ -143,14 +143,6 @@ module.exports = function(template) {
    * @return {Mixed}
    */
   View.prototype.get = function(key) {
-    if(Array.isArray(key)) {
-      var data = {};
-      var self = this;
-      key.forEach(function(attr){
-        data[attr] = self.get(attr);
-      });
-      return data;
-    }
     return this.lookup(key).get(key);
   };
 
