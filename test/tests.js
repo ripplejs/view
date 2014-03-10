@@ -19,24 +19,6 @@ describe('View', function(){
     assert(view.props.foo === 'bar');
   })
 
-  it('should mount to an element and fire an event', function(done){
-    var view = new View();
-    view.on('mount', function(){
-      assert(document.body.contains(view.el));
-      done();
-    })
-    view.mount(document.body);
-  })
-
-  it('should unmount and fire an event', function(done){
-    var view = new View();
-    view.mount(document.body);
-    view.on('unmount', function(){
-      done();
-    })
-    view.unmount();
-  })
-
   describe('getting values', function () {
 
     it('should get values from the state first', function () {
@@ -75,12 +57,9 @@ describe('View', function(){
       assert(view.state.get('foo') === 'bar');
     })
 
-    it('should get state with accessors', function () {
-      var view = View.create({
-        state: {
-          foo: 'bar'
-        }
-      });
+    it.skip('should get state with accessors', function () {
+      var view = new View();
+      view.state.set('foo', 'bar');
       assert(view.state.foo === 'bar');
     });
 
@@ -113,12 +92,11 @@ describe('View', function(){
       View.computed('fullname', ['names.first', 'names.last'], function(first, last){
         return [first,last].join(' ');
       });
-      var view = View.create({
-        state: {
-          names: {
-            first: 'Bruce',
-            last: 'Willis'
-          }
+      var view = new View();
+      view.set({
+        names: {
+          first: 'Bruce',
+          last: 'Willis'
         }
       });
       assert(view.get('fullname') === 'Bruce Willis');
@@ -133,10 +111,10 @@ describe('View', function(){
 
     it('should watch for changes', function(done){
       var view = new View();
-      view.state.change('foo', function(){
+      view.change('foo', function(){
         done();
       })
-      view.state.set('foo', 'bar');
+      view.set('foo', 'bar');
     })
 
     it('should be able to set default properties', function () {
@@ -197,98 +175,12 @@ describe('View', function(){
 
   describe('lifecycle events', function () {
 
-    it('should bind ready callback to the instance', function () {
-      View.on('ready', function(){
-        this.set('foo', 'bar');
-      })
-      var view = new View();
-      assert(view.get('foo') === 'bar');
-    });
-
     it('should bind created callback to the instance', function () {
       View.on('created', function(){
         this.set('foo', 'bar');
       })
       var view = new View();
       assert(view.get('foo') === 'bar');
-    });
-
-    it('should bind mount callback to the instance', function () {
-      View.on('mount', function(){
-        this.set('foo', 'bar');
-      })
-      var view = new View();
-      view.mount(document.body);
-      assert(view.get('foo') === 'bar');
-      view.unmount();
-    });
-
-    it('should bind unmount callback to the instance', function () {
-      View.on('unmount', function(){
-        this.set('foo', 'bar');
-      })
-      var view = new View();
-      view.mount(document.body);
-      view.unmount();
-      assert(view.get('foo') === 'bar');
-    });
-
-  });
-
-  describe('mounting', function () {
-    var view;
-
-    beforeEach(function () {
-      view = new View();
-    });
-
-    afterEach(function () {
-      view.unmount();
-    });
-
-    it('should mount to an element', function () {
-      view.mount(document.body);
-      assert(document.body.contains(view.el));
-    });
-
-    it('should unmount', function () {
-      view.mount(document.body);
-      view.unmount();
-      assert(document.body.contains(view.el) === false);
-    });
-
-    it('should emit an instance event when mounted', function (done) {
-      view.on('mount', function(){
-        done();
-      });
-      view.mount(document.body);
-    });
-
-    it('should emit an instance event when unmounted', function (done) {
-      view.on('unmount', function(){
-        done();
-      });
-      view.mount(document.body);
-      view.unmount();
-    });
-
-    it('should not emit an event if not mounted', function(done){
-      view.on('unmount', function(){
-        done(false);
-      });
-      view.unmount();
-      done();
-    })
-
-  });
-
-  describe('custom templates', function () {
-
-    it('should allow a template override', function () {
-      var view = new View(null, {
-        template: '<div id="hooray"></div>'
-      });
-      assert(view.el.id === "hooray");
     });
 
   });
@@ -301,11 +193,9 @@ describe('View', function(){
         state: {
           foo: 'bar'
         },
-        template: '<div id="created"></div>',
         owner: parent
       });
       assert(view.get('foo') === 'bar');
-      assert(view.el.id === 'created');
       assert(view.owner === parent);
       assert(view.root === parent);
     });
@@ -316,7 +206,7 @@ describe('View', function(){
 
     it('should expose a use method', function () {
       View.use(function(Child){
-        Child.on('ready', function(){
+        Child.on('created', function(){
           this.set('foo', 'bar');
         });
       });
@@ -327,13 +217,6 @@ describe('View', function(){
   });
 
   describe('destroying the view', function () {
-
-    it('should unmount', function () {
-      var view = new View();
-      view.mount(document.body);
-      view.destroy();
-      assert(document.body.contains(view.el) === false);
-    });
 
     it('should remove all event listeners', function (done) {
       var view = new View();

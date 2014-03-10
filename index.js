@@ -11,7 +11,7 @@ function freeze(Model) {
   });
 }
 
-module.exports = function(template) {
+module.exports = function() {
 
   /**
    * Stores the state of the view.
@@ -22,7 +22,6 @@ module.exports = function(template) {
     .use(accessors)
     .use(computed);
 
-
   /**
    * Stores the properties of the view
    *
@@ -31,7 +30,6 @@ module.exports = function(template) {
   var Props = model()
     .use(accessors)
     .use(freeze);
-
 
   /**
    * The view controls the lifecycle of the
@@ -48,10 +46,7 @@ module.exports = function(template) {
     this.state = new State(options.state);
     this.owner = options.owner;
     this.root = this.owner ? this.owner.root : this;
-    this.template = options.template || template;
     View.emit('created', this, props, options);
-    this.el = this.render();
-    View.emit('ready', this);
   }
 
 
@@ -159,7 +154,6 @@ module.exports = function(template) {
     this.state.set(key, value);
   };
 
-
   /**
    * Watch for a state change
    *
@@ -174,51 +168,6 @@ module.exports = function(template) {
     return binding;
   };
 
-
-  /**
-   * Compile this view's template into an element.
-   *
-   * @return {Element}
-   */
-  View.prototype.render = function(){
-    return domify(this.template);
-  };
-
-
-  /**
-   * Append this view to an element
-   *
-   * @param {Element} node
-   *
-   * @return {View}
-   */
-  View.prototype.mount = function(node, replace) {
-    if(replace) {
-      node.parentNode.replaceChild(this.el, node);
-    }
-    else {
-      node.appendChild(this.el);
-    }
-    View.emit('mount', this, node, replace);
-    this.emit('mount', node, replace);
-    return this;
-  };
-
-
-  /**
-   * Remove the element from the DOM
-   *
-   * @return {View}
-   */
-  View.prototype.unmount = function() {
-    if(!this.el.parentNode) return this;
-    this.el.parentNode.removeChild(this.el);
-    View.emit('unmount', this);
-    this.emit('unmount');
-    return this;
-  };
-
-
   /**
    * Remove the element from the DOM
    *
@@ -227,10 +176,8 @@ module.exports = function(template) {
   View.prototype.destroy = function() {
     View.emit('destroy', this);
     this.emit('destroy');
-    this.unmount();
     this.off();
   };
-
 
   return View;
 };
