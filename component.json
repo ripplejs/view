@@ -9,7 +9,7 @@
     "component/emitter": "*",
     "ripplejs/model": "0.4.1",
     "ripplejs/computed": "0.0.1",
-    "ripplejs/accessors": "0.0.2",
+    "ripplejs/accessors": "0.0.3",
     "timoxley/to-array": "0.2.1"
   },
   "development": {
